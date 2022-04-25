@@ -1,5 +1,6 @@
 using Distributions, Random, Plots
 using LinearAlgebra
+using StatsBase
 
 ## Discretização via Tauchen
 function disc_t(N, mu, sigma, rho, m)
@@ -99,7 +100,6 @@ for i in 2:1001
     theta_s_r[i] = sample(theta_r, Weights(P_r[i_r,:]))
 end
 
-
 plot(1:1001,z)
 plot!(1:1001,theta_s_r)
 plot!(1:1001,theta_s_t)
@@ -122,8 +122,8 @@ inv(z_r_lag'*z_r_lag)*(z_r_lag'*z_r)
 ### Questão 5
 # refazer para rho = 0.99
 rho = 0.99
-theta_t,P_t = disc_t( 9, 0, 0.007, rho, 3)
-theta_r,P_r = disc_r( 9, 0, 0.007, rho, 3)
+theta_t,P_t = disc_t( 13, 0, 0.007, rho, 3)
+theta_r,P_r = disc_r( 13, 0, 0.007, rho, 3)
 
 erros = 0.007.*randn(seed,Float64,(1001,1))
 z = zeros(1001,1)

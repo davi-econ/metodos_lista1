@@ -10,8 +10,8 @@ using NBInclude
 
 #### Questões 1 e 2
 # obtendo valores iniciais
-theta_t,P_t = disc_t( 9, 0, 0.007, 0.95, 3)
-theta_r,P_r = disc_r( 9, 0, 0.007, 0.95, 3)
+theta_t,P_t = disc_t(9;mu =  0,sigma = 0.007,rho =  0.95,m = 3)
+theta_r,P_r = disc_r( 9; mu = 0, sigma = 0.007, rho = 0.95,m = 3)
 
 #### Questão 3 ####
 # simulacao para O processo contínuo, via tauchen e via rouwenhorst

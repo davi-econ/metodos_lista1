@@ -40,7 +40,7 @@ inv(z_r_lag'*z_r_lag)*(z_r_lag'*z_r)
 
 ### Questão 5
 # refazer para rho = 0.99
-z, z_r,z_t = simulacao_processos(10000;rho = 0.99,mu = 0, sigma = 0.007,n = 9, m =3)
+z, z_t,z_r = simulacao_processos(10000;rho = 0.99,mu = 0, sigma = 0.007,n = 9, m =3)
 plot(z, label = "AR1 contínuo", title = "Processos simulados")
 plot!(z_t, label = "Tauchen")
 plot!(z_r, label = "Rouwenhorst")

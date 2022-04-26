@@ -44,7 +44,7 @@ def disc_tauchen(rho, mu, sigma, m, n):
 
 
 theta_t,P_t = disc_tauchen(rho = 0.95, mu = 0, sigma = 0.007,m = 3, n = 9) 
-theta_t
+
 
 ###### método de Rouwenhorst
 def disc_rouwenhorst(rho, mu , sigma ,m , n ):
@@ -83,7 +83,6 @@ def disc_rouwenhorst(rho, mu , sigma ,m , n ):
     return(theta,PN)
 
 theta_r, P_r = disc_rouwenhorst(rho = 0.95, mu = 0, sigma = 0.007,m = 3, n = 9)
-theta_r
 
 
 ### Questão 3 ####
@@ -95,19 +94,17 @@ z = np.zeros(1001)
 for i in np.arange(1,1001,1):
     z[i] = rho*z[i-1] + erros[i]
 
-plt.plot(np.arange(0,1001,1),z)
-plt.show()
 
 ## Vetores para os processos discretizados
 theta_s_t = np.zeros(1001)
 theta_s_r = np.zeros(1001)
-
+i_t, i_r = 5,5
 ## preenchimento dos processos discretizados usando os choques do processo contínuo
 for i in np.arange(1,1001,1):
-    i_t = np.argmin(abs(theta_t - z[i-1]))
-    i_r = np.argmin(abs(theta_r - z[i-1]))
-    theta_s_t[i] = np.random.choice(theta_t,1,False,p = P_t[i_t])
-    theta_s_r[i] = np.random.choice(theta_r,1,False,p = P_r[i_r])
+    i_t = np.argmin(abs(theta_t - theta_t@P_t[i_t,] - erros[i]))
+    i_r = np.argmin(abs(theta_r - theta_r@P_r[i_r,] - erros[i]))
+    theta_s_t[i] = theta_t[i_t]
+    theta_s_r[i] = theta_r[i_r]
 
 ### Gráficos 
 plt.plot(np.arange(0,1001,1),z,label='Contínuo')
@@ -117,17 +114,6 @@ plt.legend(loc = 'best')
 plt.show()
 
 ##### Questão 4 #####
-
-#z_r = np.zeros(1001)
-#z_t = np.zeros(1001)
-#for i in range(1000):
-#    if i == 0:
-#        z_r[i] = 0
-#        z_t[i] = 0
-#    else:
-#        z_r[i] = np.random.choice(theta_r,1,False,p = P_r[np.where(z_r[i-1] == theta_r)[0][0]])
-#        z_t[i] = np.random.choice(theta_t,1,False,p = P_t[np.where(z_t[i-1] == theta_t)[0][0]])
-
 
 z_t_lag = theta_s_t[0:1000]
 z_t = theta_s_t[1:1001]
@@ -159,14 +145,15 @@ plt.show()
 ## Vetores para os processos discretizados
 theta_s_t = np.zeros(1001)
 theta_s_r = np.zeros(1001)
-
+i_t, i_r = 5,5
 ## preenchimento dos processos discretizados usando os choques do processo contínuo
 for i in np.arange(1,1001,1):
-    i_t = np.argmin(abs(theta_t - z[i-1]))
-    i_r = np.argmin(abs(theta_r - z[i-1]))
-    theta_s_t[i] = np.random.choice(theta_t,1,False,p = P_t[i_t])
-    theta_s_r[i] = np.random.choice(theta_r,1,False,p = P_r[i_r])
+    i_t = np.argmin(abs(theta_t - theta_t@P_t[i_t,] - erros[i]))
+    i_r = np.argmin(abs(theta_r - theta_r@P_r[i_r,] - erros[i]))
+    theta_s_t[i] = theta_t[i_t]
+    theta_s_r[i] = theta_r[i_r]
 
+    
 ### Gráficos 
 plt.plot(np.arange(0,1001,1),z,label='Contínuo')
 plt.plot(np.arange(0,1001,1),theta_s_t,label='Tauchen')

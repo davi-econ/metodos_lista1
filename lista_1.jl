@@ -2,6 +2,8 @@ using Distributions, Random, Plots
 using LinearAlgebra
 using StatsBase
 using NBInclude
+using DataFrames
+using GLM
 
 # Carregando as funções que discretizam o processo, gerando o grid de estados e a matriz de transição
 @nbinclude("tauchen.ipynb")
@@ -10,48 +12,31 @@ using NBInclude
 
 #### Questões 1 e 2
 # obtendo valores iniciais
-theta_t,P_t = disc_t(9;mu =  0,sigma = 0.007,rho =  0.95,m = 3)
-theta_r,P_r = disc_r( 9; mu = 0, sigma = 0.007, rho = 0.95,m = 3)
+theta_t1,P_t1 = disc_t(9;mu =  0,sigma = 0.007,rho =  0.95,m = 3)
+theta_r1,P_r1 = disc_r( 9; mu = 0, sigma = 0.007, rho = 0.95,m = 3)
+
+theta_t2,P_t2 = disc_t(9;mu =  0,sigma = 0.007,rho =  0.95,m = 3)
+theta_r2,P_r2 = disc_r( 9; mu = 0, sigma = 0.007, rho = 0.95,m = 3)
 
 #### Questão 3 ####
 # simulacao para O processo contínuo, via tauchen e via rouwenhorst
-z, z_t, z_r = simulacao_processos(10000)
+z1, z_t1, z_r1 = simulacao_processos(10000;rho = 0.95)
+z2, z_t2, z_r2 = simulacao_processos(10000;rho = 0.99)
+
 # Gráficos
 # apesar da simulação ter sido para 10000 erros, os gráficos mostram somente os 1000 primeiros para ficar mais legível
-plot(1:1000,z[1:1000,], label = "AR1 contínuo", title = "Processos simulados")
-plot!(1:1000,z_r[1:1000,], label = "Tauchen")
-plot!(1:1000,z_t[1:1000,], label = "Rouwenhorst")
+p095 = plot(1:1000,z1[1:1000,], label = "AR1 contínuo", title = "Processos simulados rho = 0.95")
+p095 = plot!(1:1000,z_t1[1:1000,], label = "Tauchen")
+p095 = plot!( 1:1000,z_r1[1:1000,], label = "Rouwenhorst")
 
-
-
+p099 = plot(1:1000,z2[1:1000,], label = "AR1 contínuo", title = "Processos simulados rho = 0.99")
+p099 = plot!(1:1000,z_t2[1:1000,], label = "Tauchen")
+p099 = plot!( 1:1000,z_r2[1:1000,], label = "Rouwenhorst")
 ##### Questão 4 #####
 ## organizando entre nível e lag
-# de tauchen
-z_t_lag = z_t[1:9999,1]
-z_t = z_t[2:10000,1]
-
-# de Rouwenhorst
-z_r_lag = z_r[1:9999,1]
-z_r = z_r[2:10000,1]
-
-# encontrando rho a partir dos dados simulados
-inv(z_t_lag'*z_t_lag)*(z_t_lag'*z_t)
-inv(z_r_lag'*z_r_lag)*(z_r_lag'*z_r)
-
-### Questão 5
-# refazer para rho = 0.99
-z, z_t,z_r = simulacao_processos(10000;rho = 0.99,mu = 0, sigma = 0.007,n = 9, m =3)
-plot(z, label = "AR1 contínuo", title = "Processos simulados")
-plot!(z_t, label = "Tauchen")
-plot!(z_r, label = "Rouwenhorst")
-
-
-z_t_lag = z_t[1:9999,1]
-z_t = z_t[2:10000,1]
-
-z_r_lag = z_r[1:9999,1]
-z_r = z_r[2:10000,1]
-
-inv(z_t_lag'*z_t_lag)*(z_t_lag'*z_t)
-inv(z_r_lag'*z_r_lag)*(z_r_lag'*z_r)
+preg95 = DataFrame(Tauchen = z_t1,Rouw = z_r1,lt =lag(z_t1),lr = lag(z_r1))
+preg99 = DataFrame(Tauchen = z_t2,Rouw = z_r2,lt =lag(z_t2),lr = lag(z_r2))
+# regressao
+tauc = lm(@formula(Tauchen ~ lt + 0 ),preg95)
+rouw = lm(@formula(Rouw ~ lr + 0 ),preg99)
 

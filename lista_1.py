@@ -1,11 +1,14 @@
-
-from secrets import choice
-from shutil import which
 import numpy as np
 from numpy.random import normal
 import scipy as sc
+from scipy.ndimage.interpolation import shift
 from scipy.stats import norm
 import matplotlib.pyplot as plt
+import array_to_latex as atl
+import statsmodels.formula.api as smf
+import pandas as pd
+from stargazer.stargazer import Stargazer
+
 random.seed(123)
 mu = 0
 rho = 0.95
@@ -41,10 +44,6 @@ def disc_tauchen(rho, mu, sigma, m, n):
             transition[i,j] = norm.cdf(upper/sigma, loc=0, scale=1)-norm.cdf(lower/sigma, loc=0, scale=1)
 
     return [theta, transition]
-
-
-theta_t,P_t = disc_tauchen(rho = 0.95, mu = 0, sigma = 0.007,m = 3, n = 9) 
-
 
 ###### método de Rouwenhorst
 def disc_rouwenhorst(rho, mu , sigma ,m , n ):
@@ -82,94 +81,80 @@ def disc_rouwenhorst(rho, mu , sigma ,m , n ):
         PN[i] = PN[i]/PN[i].sum()
     return(theta,PN)
 
+theta_t,P_t = disc_tauchen(rho = 0.95, mu = 0, sigma = 0.007,m = 3, n = 9) 
 theta_r, P_r = disc_rouwenhorst(rho = 0.95, mu = 0, sigma = 0.007,m = 3, n = 9)
+
+theta_t2,P_t2 = disc_tauchen(rho = 0.99, mu = 0, sigma = 0.007,m = 3, n = 9) 
+theta_r2,P_r2 = disc_rouwenhorst(rho = 0.99, mu = 0, sigma = 0.007,m = 3, n = 9) 
 
 
 ### Questão 3 ####
 ### erros do processo contínuo
-erros = normal(0,0.007,1001)
-z = np.zeros(1001)
+erros = normal(0,0.007,10001)
+z = np.zeros(10001)
 
 ## AR(1) contínuo
-for i in np.arange(1,1001,1):
-    z[i] = rho*z[i-1] + erros[i]
+for i in np.arange(1,10001,1):
+    z[i] = 0.95*z[i-1] + erros[i]
 
 
 ## Vetores para os processos discretizados
-theta_s_t = np.zeros(1001)
-theta_s_r = np.zeros(1001)
-i_t, i_r = 5,5
+theta_s_t = np.zeros(10001)
+theta_s_r = np.zeros(10001)
+i_t, i_r = 4,4
 ## preenchimento dos processos discretizados usando os choques do processo contínuo
-for i in np.arange(1,1001,1):
-    i_t = np.argmin(abs(theta_t - theta_t@P_t[i_t,] - erros[i]))
-    i_r = np.argmin(abs(theta_r - theta_r@P_r[i_r,] - erros[i]))
+
+for i in np.arange(1,10001,1):
+    i_t = np.where(norm.cdf(erros[i],loc = 0, scale=0.007) <= np.cumsum(P_t[i_t,:]))[0][0]
+    i_r = np.where(norm.cdf(erros[i],loc = 0, scale=0.007) <= np.cumsum(P_r[i_r,:]))[0][0]
     theta_s_t[i] = theta_t[i_t]
     theta_s_r[i] = theta_r[i_r]
 
 ### Gráficos 
+plt.title("Processos simulados com rho = 0.95")
 plt.plot(np.arange(0,1001,1),z,label='Contínuo')
 plt.plot(np.arange(0,1001,1),theta_s_t,label='Tauchen')
 plt.plot(np.arange(0,1001,1),theta_s_r,label='Rouwenhorst')
 plt.legend(loc = 'best')
-plt.show()
+#plt.show()
 
 ##### Questão 4 #####
-
-z_t_lag = theta_s_t[0:1000]
-z_t = theta_s_t[1:1001]
-
-z_r_lag = theta_s_r[0:1000]
-z_r = theta_s_r[1:1001]
-
-rho_estimado_tauch = (z_t @ z_t_lag)/(z_t_lag.T @ z_t_lag)
-rho_estimado_rouw = (z_r @ z_r_lag)/(z_r_lag.T @ z_r_lag)
-
-
 ### Refazendo tudo com rho = 0.99
-
-theta_t,P_t = disc_tauchen(rho = 0.99, mu = 0, sigma = 0.007,m = 3, n = 9) 
-theta_r,P_r = disc_rouwenhorst(rho = 0.99, mu = 0, sigma = 0.007,m = 3, n = 9) 
-
-rho = 0.99
 ### erros do processo contínuo
-erros = normal(0,0.007,1001)
-z = np.zeros(1001)
+z2 = np.zeros(10001)
 
 ## AR(1) contínuo
-for i in np.arange(1,1001,1):
-    z[i] = rho*z[i-1] + erros[i]
+for i in np.arange(1,10001,1):
+    z2[i] = 0.99*z2[i-1] + erros[i]
 
-plt.plot(np.arange(0,1001,1),z)
-plt.show()
 
 ## Vetores para os processos discretizados
-theta_s_t = np.zeros(1001)
-theta_s_r = np.zeros(1001)
-i_t, i_r = 5,5
+theta_s_t2 = np.zeros(10001)
+theta_s_r2 = np.zeros(10001)
+i_t, i_r = 4,4
 ## preenchimento dos processos discretizados usando os choques do processo contínuo
-for i in np.arange(1,1001,1):
-    i_t = np.argmin(abs(theta_t - theta_t@P_t[i_t,] - erros[i]))
-    i_r = np.argmin(abs(theta_r - theta_r@P_r[i_r,] - erros[i]))
-    theta_s_t[i] = theta_t[i_t]
-    theta_s_r[i] = theta_r[i_r]
+for i in np.arange(1,10001,1):
+    i_t = np.where(norm.cdf(erros[i],loc = 0, scale=0.007) <= np.cumsum(P_t2[i_t,:]))[0][0]
+    i_r = np.where(norm.cdf(erros[i],loc = 0, scale=0.007) <= np.cumsum(P_r2[i_r,:]))[0][0]
+    theta_s_t2[i] = theta_t2[i_t]
+    theta_s_r2[i] = theta_r2[i_r]
 
     
 ### Gráficos 
-plt.plot(np.arange(0,1001,1),z,label='Contínuo')
-plt.plot(np.arange(0,1001,1),theta_s_t,label='Tauchen')
-plt.plot(np.arange(0,1001,1),theta_s_r,label='Rouwenhorst')
+plt.title("Processos simulados com rho = 0.99")
+plt.plot(np.arange(0,1001,1),z2,label='Contínuo')
+plt.plot(np.arange(0,1001,1),theta_s_t2,label='Tauchen')
+plt.plot(np.arange(0,1001,1),theta_s_r2,label='Rouwenhorst')
 plt.legend(loc = 'best')
-plt.show()
-
-
-## compatibilizando a dimensão do lag com com a dimensão do tempo presente
-z_t_lag = theta_s_t[0:1000]
-z_t = theta_s_t[1:1001]
+#plt.show()
 
 ## 
-z_r_lag = theta_s_r[0:1000]
-z_r = theta_s_r[1:1001]
+data_reg_95 = pd.DataFrame({"AR1":z, "Tauchen":theta_s_t, "Rouwenhorst":theta_s_r})
+data_reg_99 = pd.DataFrame({"AR1":z2, "Tauchen":theta_s_t2, "Rouwenhorst":theta_s_r2})
 
-(z_t @ z_t_lag)/(z_t_lag.T @ z_t_lag)
-(z_r @ z_r_lag)/(z_r_lag.T @ z_r_lag)
 
+reg_t_95 = smf.ols("theta_s_t ~ shift(theta_s_t, -1) - 1", data = data_reg_95).fit()
+reg_r_95 = smf.ols("theta_s_r ~ shift(theta_s_r, -1) - 1", data = data_reg_95).fit()
+
+reg_t_99 = smf.ols("theta_s_t2 ~ shift(theta_s_t2, -1) - 1", data = data_reg_99).fit()
+reg_r_99 = smf.ols("theta_s_r2 ~ shift(theta_s_r2, -1) - 1", data = data_reg_99).fit()
